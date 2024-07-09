@@ -13,7 +13,11 @@ WebSocketServer::WebSocketServer(quint16 port, QObject *parent) :
                 this, &WebSocketServer::onNewConnection);
     }
 }
-
+WebSocketServer::~WebSocketServer()
+{
+    m_webSocketServer->close();
+    qDeleteAll(m_clients.begin(), m_clients.end());
+}
 void WebSocketServer::onNewConnection()
 {
     QWebSocket *socket = m_webSocketServer->nextPendingConnection();
@@ -23,4 +27,22 @@ void WebSocketServer::onNewConnection()
         this, &WebSocketServer::socketDisconnected);
     m_clients << socket;
     qDebug() <<"New client connected";
+}
+void WebSocketServer::processMessage(QString message)
+{
+    QWebSocket *sender = qobject_cast<QWebSocket *>(QObject::sender());
+    for (QWebSocket *client : qAsConst(m_clients)) {
+        if (client != sender) { // отправляем всем, кроме отправителя
+            client->sendTextMessage(message);
+        }
+    }
+}
+void WebSocketServer::socketDisconnected()
+{
+    QWebSocket *client = qobject_cast<QWebSocket *>(QObject::sender());
+    if (client) {
+        m_clients.removeAll(client);
+        client->deleteLater();
+        qDebug() << "Client disconnected";
+    }
 }
