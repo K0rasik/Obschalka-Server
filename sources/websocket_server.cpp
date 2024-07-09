@@ -32,7 +32,7 @@ void WebSocketServer::processMessage(QString message)
 {
     QWebSocket *sender = qobject_cast<QWebSocket *>(QObject::sender());
     for (QWebSocket *client : qAsConst(m_clients)) {
-        if (client != sender) { // отправляем всем, кроме отправителя
+        if (client != sender) { 
             client->sendTextMessage(message);
         }
     }
